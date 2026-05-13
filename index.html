@@ -30,30 +30,33 @@
         .handwriting { font-family: 'Dancing Script', cursive; }
         .serif { font-family: 'Playfair Display', serif; }
 
-        /* === FITUR LANDSCAPE OTOMATIS (AUTO ROTATE) === */
-        @media screen and (orientation: portrait) {
-            body {
-                transform: rotate(-90deg);
-                transform-origin: left top;
-                width: 100vh;
-                height: 100vw;
-                overflow-x: hidden;
-                position: absolute;
-                top: 100%;
-                left: 0;
-            }
-            .slide {
-            width: 100vh;
-            height: 100vw;
+        /* === FITUR WAJIB ROTATE UNTUK HP (PORTRAIT) === */
+        #rotate-device {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: #ffb3c6;
+            color: #590d22;
+            z-index: 9999;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
         }
-        .tilted-grid-container {
-            width: 150vh; height: 200vw;
-        }
-    }
 
-    /* === KONSEP FULL SCREEN (1 LAYAR PENUH) === */
-    .slide {
-        width: 100vw;
+        #rotate-device h1 { font-size: 3rem; margin-bottom: 10px; }
+        #rotate-device p { font-size: 1.2rem; font-weight: 600; }
+
+        @media screen and (orientation: portrait) {
+            #rotate-device { display: flex; }
+            .main-content { display: none; }
+            body { overflow: hidden; }
+        }
+
+        /* === KONSEP FULL SCREEN (1 LAYAR PENUH) === */
+        .slide {
+            width: 100vw;
             height: 100vh;
             scroll-snap-align: start; /* Snap ke ujung atas layar */
             position: relative;
@@ -231,9 +234,15 @@
 <body>
 
     <!-- MUSIK BACKSOUND -->
-    <audio id="bgm" loop>
+    <audio autoplay loop>
         <source src="musik1.mpeg" type="audio/mpeg">
     </audio>
+
+    <!-- LAYAR ROTATE UNTUK HP -->
+    <div id="rotate-device">
+        <h1 class="handwriting">Oopsie! 🙈</h1>
+        <p>Putar miring (Landscape) HP adek dulu ya,<br>biar liat kejutannya full layar! 💖✨</p>
+    </div>
 
     <div class="main-content">
         
@@ -367,49 +376,45 @@
 
     </div>
 
-    <!-- SCRIPT ANIMASI SCROLL & AUTOPLAY MUSIK -->
+    <!-- SCRIPT ANIMASI SCROLL -->
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            // Logika Play Musik Saat Sentuhan Pertama / Scroll Pertama
-            const audio = document.getElementById('bgm');
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.3 
+            };
+
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, observerOptions);
+
+            const animElements = document.querySelectorAll('.anim');
+            animElements.forEach(el => observer.observe(el));
+
+            const audio = document.querySelector('audio');
             
-            function playMusicOnInteract() {
-                if (audio && audio.paused) {
-                    audio.play().catch(err => console.log("Autoplay dicegah:", err));
+            // Fungsi paksa putar musik
+            const tryPlayAudio = () => {
+                if (audio.paused) {
+                    audio.play().catch(e => console.log("Menunggu interaksi..."));
                 }
-                // Hapus event setelah musik berhasil diputar pertama kali agar tidak memberatkan browser
-                window.removeEventListener('touchstart', playMusicOnInteract);
-                window.removeEventListener('click', playMusicOnInteract);
-                window.removeEventListener('wheel', playMusicOnInteract);
-                window.removeEventListener('touchmove', playMusicOnInteract);
-            }
-
-            // Deteksi interaksi: sentuhan, klik, atau scroll
-            window.addEventListener('touchstart', playMusicOnInteract, { once: true });
-            window.addEventListener('click', playMusicOnInteract, { once: true });
-            window.addEventListener('wheel', playMusicOnInteract, { once: true });
-            window.addEventListener('touchmove', playMusicOnInteract, { once: true });
-
-            // Logika Animasi Fade Saat di-Scroll
-            const observerOptions = {
-                root: null,
-                rootMargin: '0px',
-                threshold: 0.3 
+                // Hapus event pendeteksi setelah musik berhasil berputar
+                window.removeEventListener('scroll', tryPlayAudio);
+                window.removeEventListener('touchstart', tryPlayAudio);
+                window.removeEventListener('click', tryPlayAudio);
             };
 
-            const observer = new IntersectionObserver((entries, observer) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.classList.add('visible');
-                    }
-                });
-            }, observerOptions);
-
-            const animElements = document.querySelectorAll('.anim');
-            if (animElements.length > 0) {
-                animElements.forEach(el => observer.observe(el));
-            }
-        });
-    </script>
+            // Browser butuh pancingan agar autoplay jalan setelah di-deploy.
+            // Saat user pertama kali scroll atau sentuh layar, musik akan otomatis nyala.
+            window.addEventListener('scroll', tryPlayAudio, { once: true });
+            window.addEventListener('touchstart', tryPlayAudio, { once: true });
+            window.addEventListener('click', tryPlayAudio, { once: true });
+        });
+    </script>
 </body>
 </html>
