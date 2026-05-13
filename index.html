@@ -234,9 +234,9 @@
 <body>
 
     <!-- MUSIK BACKSOUND -->
-    <audio autoplay loop>
-        <source src="musik1.mp3" type="audio/mpeg">
-    </audio>
+    <audio id="bg-music" autoplay loop>
+        <source src="musik1.mp3" type="audio/mpeg">
+    </audio>
 
     <!-- LAYAR ROTATE UNTUK HP -->
     <div id="rotate-device">
@@ -377,8 +377,9 @@
     </div>
 
     <!-- SCRIPT ANIMASI SCROLL -->
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
+    <!-- SCRIPT ANIMASI SCROLL -->
+    <script>
+               document.addEventListener("DOMContentLoaded", function() {
             const observerOptions = {
                 root: null,
                 rootMargin: '0px',
@@ -395,26 +396,29 @@
 
             const animElements = document.querySelectorAll('.anim');
             animElements.forEach(el => observer.observe(el));
-
-            const audio = document.querySelector('audio');
-            
-            // Fungsi paksa putar musik
-            const tryPlayAudio = () => {
-                if (audio.paused) {
-                    audio.play().catch(e => console.log("Menunggu interaksi..."));
-                }
-                // Hapus event pendeteksi setelah musik berhasil berputar
-                window.removeEventListener('scroll', tryPlayAudio);
-                window.removeEventListener('touchstart', tryPlayAudio);
-                window.removeEventListener('click', tryPlayAudio);
-            };
-
-            // Browser butuh pancingan agar autoplay jalan setelah di-deploy.
-            // Saat user pertama kali scroll atau sentuh layar, musik akan otomatis nyala.
-            window.addEventListener('scroll', tryPlayAudio, { once: true });
-            window.addEventListener('touchstart', tryPlayAudio, { once: true });
-            window.addEventListener('click', tryPlayAudio, { once: true });
         });
+
+               const bgMusic = document.getElementById('bg-music');
+        let isMusicPlaying = false;
+
+        function forcePlayMusic() {
+            if (!isMusicPlaying && bgMusic) {
+                bgMusic.play().then(() => {
+                    isMusicPlaying = true;
+                    // Jika sudah menyala, matikan pendeteksi klik agar tidak error
+                    document.removeEventListener('click', forcePlayMusic);
+                    document.removeEventListener('touchstart', forcePlayMusic);
+                    document.removeEventListener('scroll', forcePlayMusic);
+                }).catch((error) => {
+                    console.log("Menunggu interaksi layar dari user...");
+                });
+            }
+        }
+
+        // Deteksi 3 jenis interaksi paling umum di HP dan Laptop
+        document.addEventListener('click', forcePlayMusic); // Deteksi klik mouse
+        document.addEventListener('touchstart', forcePlayMusic); // Deteksi sentuhan jari di layar HP
+        document.addEventListener('scroll', forcePlayMusic); // Deteksi scroll
     </script>
 </body>
 </html>
